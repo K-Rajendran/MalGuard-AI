@@ -156,56 +156,65 @@ def load_lottiefile(filepath: str):
     with open(filepath, "r") as f:
         return json.load(f)
 
-def encrypt(filepath, password, delfile):
-    if not filepath:
-        st.error("File Name cannot be empty!!")
-    else:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".aes") as encrypted_file:
-            encrypted_path = encrypted_file.name
+def encrypt(uploaded_file, password, delfile):
+    if uploaded_file is not None:
+        # Save uploaded file temporarily
+        temp_dir = tempfile.mkdtemp()
+        input_path = os.path.join(temp_dir, uploaded_file.name)
+
+        with open(input_path, 'wb') as f:
+            f.write(uploaded_file.getvalue())
+
+        output_path = input_path + ".aes"
+
         try:
-            pyAesCrypt.encryptFile(filepath, encrypted_path, password, BUFFER_SIZE)
+            pyAesCrypt.encryptFile(input_path, output_path, password, BUFFER_SIZE)
             if delfile:
-                os.remove(filepath)
+                os.remove(input_path)
+
             st.success("File Encrypted Successfully!!")
-            st.download_button("Download Encrypted File", open(encrypted_path, "rb").read(), file_name=os.path.basename(encrypted_path))
-        except Exception:
-            st.error("An error occurred!!")
 
-def decrypt(filepath, password, delfile):
-    if not filepath:
-        st.error("File Name cannot be empty!!")
+            # Download encrypted file
+            with open(output_path, "rb") as ef:
+                st.download_button(
+                    label="Download Encrypted File",
+                    data=ef.read(),
+                    file_name=os.path.basename(output_path)
+                )
+        except Exception as e:
+            st.error(f"Encryption error: {str(e)}")
+
+def decrypt(uploaded_file, password, delfile):
+    if uploaded_file is not None and uploaded_file.name.endswith(".aes"):
+        temp_dir = tempfile.mkdtemp()
+
+        # Save uploaded .aes file
+        encrypted_path = os.path.join(temp_dir, uploaded_file.name)
+        with open(encrypted_path, 'wb') as ef:
+            ef.write(uploaded_file.getvalue())
+
+        # Recover original filename by stripping `.aes`
+        original_filename = uploaded_file.name[:-4]
+        decrypted_path = os.path.join(temp_dir, original_filename)
+
+        try:
+            pyAesCrypt.decryptFile(encrypted_path, decrypted_path, password, BUFFER_SIZE)
+            if delfile:
+                os.remove(encrypted_path)
+
+            st.success("File Decrypted Successfully!!")
+
+            # Download decrypted file
+            with open(decrypted_path, "rb") as df:
+                st.download_button(
+                    label="Download Decrypted File",
+                    data=df.read(),
+                    file_name=original_filename
+                )
+        except Exception as e:
+            st.error(f"Decryption error: {str(e)}")
     else:
-        if os.path.exists(filepath):
-            # Extract the original file name by removing .aes extension
-            encrypted_filename = os.path.basename(filepath)
-            if encrypted_filename.endswith(".aes"):
-                original_filename = encrypted_filename[:-4]  # Remove '.aes'
-
-                # Create temp file with original file's name and extension
-                temp_dir = tempfile.mkdtemp()
-                decrypted_path = os.path.join(temp_dir, original_filename)
-
-                try:
-                    pyAesCrypt.decryptFile(filepath, decrypted_path, password, BUFFER_SIZE)
-                    if delfile:
-                        os.remove(filepath)
-                    st.success("File Decrypted Successfully!!")
-
-                    # Download with correct original name and extension
-                    with open(decrypted_path, "rb") as f:
-                        st.download_button(
-                            label="Download Decrypted File",
-                            data=f.read(),
-                            file_name=original_filename
-                        )
-                except ValueError as e:
-                    st.error(str(e))
-                except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
-            else:
-                st.error("Uploaded file does not have a .aes extension.")
-        else:
-            st.error("File does not exist!!")
+        st.error("Uploaded file is either missing or not a valid .aes file.")
 
 def main():
     col1, col2 = st.columns((4, 10))
@@ -221,7 +230,7 @@ def main():
 
     uploaded_file = st.file_uploader("Select File:", type=["txt", "pdf", "png", "jpg", "jpeg", "gif", "aes"])
     password = st.text_input("Password", "12345", type="password")
-    delfile = st.checkbox("Delete File after Encrypt/Decrypt", key="aeskey0")
+    delfile = st.checkbox("Delete file after Encrypt/Decrypt")
 
     if uploaded_file is not None:
         # Save uploaded file to a temporary file
@@ -230,10 +239,10 @@ def main():
             tmp_path = tmp.name
 
         if st.button("Encrypt"):
-            encrypt(tmp_path, password, delfile)
+            encrypt(uploaded_file, password, delfile)
 
         if st.button("Decrypt"):
-            decrypt(tmp_path, password, delfile)
+            decrypt(uploaded_file, password, delfile)
 
 # Only run main if you're on the AES page
 if selected == 'AES Encryption/Decryption':

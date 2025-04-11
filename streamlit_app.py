@@ -148,163 +148,153 @@ if selected == 'Malware Detection In Files':
     st.markdown("_________")
     st.markdown("For more details or assistance, please reach out to us.")
 
-#AES page
-UPLOADS_DIR = "F:\\Projects\\Malware Detection using ML\\Files\\"
-ENCRYPTED_DIR = "F:\\Projects\\Malware Detection using ML\\Files\\Encrypted files\\"
-DECRYPTED_DIR = "F:\\Projects\Malware Detection using ML\\Files\\Decrypted files\\"
+# Buffer size
+BUFFER_SIZE = 65536
 
-if selected == 'AES Encryption/Decryption':
-    def decrypt(filepath, password, delfile):
-        if not filepath:
-            st.error("File Name cannot be empty!!")
-        else:
-            if os.path.exists(filepath):
-                filepathwaes = os.path.join(DECRYPTED_DIR, os.path.basename(filepath).replace(".aes", ""))
-                #filepathwaes = filepath.split(".aes")[0]
-                try:
-                    pyAesCrypt.decryptFile(filepath, filepathwaes, password, int(65536))
-                    if delfile:
-                        os.remove(filepath)
-                    st.success("File Decrypted Successfully!!")
-                except ValueError as e:
-                    st.error(str(e))
-                except:
-                    st.error("An error occurred!!")
-            else:
-                st.error("File does not exist!!")
+# Load Lottie animation from relative path
+def load_lottiefile(filepath: str):
+    with open(filepath, "r") as f:
+        return json.load(f)
 
-    def encrypt(filepath, password, delfile):
-        if not filepath:
-            st.error("File Name cannot be empty!!")
-        else:
-            if os.path.exists(filepath):
-                filepathaes = os.path.join(ENCRYPTED_DIR, os.path.basename(filepath) + ".aes")
-                #st.write(filepathaes)
-                try:
-                    pyAesCrypt.encryptFile(filepath, filepathaes, password, int(65536))
-                    if delfile:
-                        os.remove(filepath)
-                    st.success("File Encrypted Successfully!!")
-                except:
-                    st.error("An error occurred!!")
-            else:
-                st.error("File does not exist!!")
+def decrypt(filepath, password, delfile):
+    if not filepath:
+        st.error("File Name cannot be empty!!")
+    else:
+        decrypted_path = filepath.replace(".aes", "")
+        try:
+            pyAesCrypt.decryptFile(filepath, decrypted_path, password, BUFFER_SIZE)
+            if delfile:
+                os.remove(filepath)
+            st.success("File Decrypted Successfully!!")
+            st.download_button("Download Decrypted File", open(decrypted_path, "rb").read(), file_name=os.path.basename(decrypted_path))
+        except ValueError as e:
+            st.error(str(e))
+        except Exception:
+            st.error("An error occurred!!")
 
-    def main():
-        col1,col2 = st.columns((4,10))
-        with col1:
-            lottie_pbc1 = load_lottiefile("F:/Projects/Malware Detection using ML/Malware-Detection/lottiefiles/virus.json")
-            st_lottie(
-                lottie_pbc1,
-                loop=True,
-                quality="high",
-                height=280, width=280,
-            )
-        with col2:
-            st.markdown("<h1 style='text-align: left; color: #000080;'>File Encrypter/Decrypter(AES Algorithm)</h1>", unsafe_allow_html=True)
-        st.markdown("_________")
-        
-        uploaded_file = st.file_uploader("Select File: ", type=["txt", "pdf", "png", "jpg", "jpeg", "gif", "aes"])
-        
-        password = st.text_input("Password", "12345", type="password")
-        delfile = st.checkbox("Delete File after Encrypt/Decrypt", key="aeskey0")
+def encrypt(filepath, password, delfile):
+    if not filepath:
+        st.error("File Name cannot be empty!!")
+    else:
+        encrypted_path = filepath + ".aes"
+        try:
+            pyAesCrypt.encryptFile(filepath, encrypted_path, password, BUFFER_SIZE)
+            if delfile:
+                os.remove(filepath)
+            st.success("File Encrypted Successfully!!")
+            st.download_button("Download Encrypted File", open(encrypted_path, "rb").read(), file_name=os.path.basename(encrypted_path))
+        except Exception:
+            st.error("An error occurred!!")
 
-        if uploaded_file is not None:
-            filepath = os.path.join(UPLOADS_DIR, uploaded_file.name)
+def main():
+    col1, col2 = st.columns((4, 10))
+    with col1:
+        lottie_path = "lottiefiles/virus.json"
+        if os.path.exists(lottie_path):
+            lottie_pbc1 = load_lottiefile(lottie_path)
+            st_lottie(lottie_pbc1, loop=True, quality="high", height=280, width=280)
+    with col2:
+        st.markdown("<h1 style='text-align: left; color: #000080;'>File Encrypter/Decrypter (AES Algorithm)</h1>", unsafe_allow_html=True)
+
+    st.markdown("_________")
+
+    uploaded_file = st.file_uploader("Select File:", type=["txt", "pdf", "png", "jpg", "jpeg", "gif", "aes"])
+    password = st.text_input("Password", "12345", type="password")
+    delfile = st.checkbox("Delete File after Encrypt/Decrypt", key="aeskey0")
+
+    if uploaded_file is not None:
+        # Save uploaded file to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp.write(uploaded_file.getvalue())
+            tmp_path = tmp.name
 
         if st.button("Encrypt"):
-            filepath = os.path.join(UPLOADS_DIR, uploaded_file.name)
-            #st.write(f"Selected File: {filepath}")  # Debugging statement
-            encrypt(filepath, password, delfile)
+            encrypt(tmp_path, password, delfile)
 
         if st.button("Decrypt"):
-            filepath = os.path.join(ENCRYPTED_DIR, uploaded_file.name)
-            #st.write(f"Selected File: {filepath}")  # Debugging statement
-            decrypt(filepath, password, delfile)
+            decrypt(tmp_path, password, delfile)
 
-    if __name__ == "__main__":
-        main()
+# Only run main if you're on the AES page
+if selected == 'AES Encryption/Decryption':
+    main()
 
-#DES page
+def load_lottiefile(filepath: str):
+    with open(filepath, "r") as f:
+        return json.load(f)
 
-if selected == 'DES Encryption/Decryption':
-    def encrypt(filepath, key, delfile):
-        if not filepath:
-            st.error("File Name cannot be empty!!")
-        else:
-            if os.path.exists(filepath):
-                try:
-                    with open(filepath, 'rb') as f:
-                        plaintext = f.read()
-                        cipher = DES.new(key, DES.MODE_ECB)
-                        ciphertext = cipher.encrypt(pad(plaintext, DES.block_size))
+def encrypt(filepath, key, delfile):
+    try:
+        with open(filepath, 'rb') as f:
+            plaintext = f.read()
+            cipher = DES.new(key, DES.MODE_ECB)
+            ciphertext = cipher.encrypt(pad(plaintext, DES.block_size))
 
-                    encrypted_filepath = os.path.join(ENCRYPTED_DIR, os.path.basename(filepath) + ".des")
-                    with open(encrypted_filepath, 'wb') as f:
-                        f.write(ciphertext)
+        encrypted_filepath = filepath + ".des"
+        with open(encrypted_filepath, 'wb') as f:
+            f.write(ciphertext)
 
-                    if delfile:
-                        os.remove(filepath)
+        if delfile:
+            os.remove(filepath)
 
-                    st.success("File Encrypted Successfully!!")
-                except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
-            else:
-                st.error("File does not exist!!")
+        st.success("File Encrypted Successfully!")
+        st.download_button("Download Encrypted File", open(encrypted_filepath, "rb").read(), file_name=os.path.basename(encrypted_filepath))
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
 
-    def decrypt(filepath, key, delfile):
-        if not filepath:
-            st.error("File Name cannot be empty!!")
-        else:
-            if os.path.exists(filepath):
-                try:
-                    with open(filepath, 'rb') as f:
-                        ciphertext = f.read()
-                        cipher = DES.new(key, DES.MODE_ECB)
-                        plaintext = unpad(cipher.decrypt(ciphertext), DES.block_size)
+def decrypt(filepath, key, delfile):
+    try:
+        with open(filepath, 'rb') as f:
+            ciphertext = f.read()
+            cipher = DES.new(key, DES.MODE_ECB)
+            plaintext = unpad(cipher.decrypt(ciphertext), DES.block_size)
 
-                    decrypted_filepath = os.path.join(DECRYPTED_DIR, os.path.basename(filepath).replace(".des", ""))
-                    with open(decrypted_filepath, 'wb') as f:
-                        f.write(plaintext)
+        decrypted_filepath = filepath.replace(".des", "")
+        with open(decrypted_filepath, 'wb') as f:
+            f.write(plaintext)
 
-                    if delfile:
-                        os.remove(filepath)
+        if delfile:
+            os.remove(filepath)
 
-                    st.success("File Decrypted Successfully!!")
-                except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
-            else:
-                st.error("File does not exist!!")
+        st.success("File Decrypted Successfully!")
+        st.download_button("Download Decrypted File", open(decrypted_filepath, "rb").read(), file_name=os.path.basename(decrypted_filepath))
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
 
-    def main():
-        col1,col2 = st.columns((4,10))
-        with col1:
-            lottie_pbc1 = load_lottiefile("F:/Projects/Malware Detection using ML/Malware-Detection/lottiefiles/protection.json")
+def main():
+    col1, col2 = st.columns((4, 10))
+    with col1:
+        lottie_path = "lottiefiles/protection.json"
+        if os.path.exists(lottie_path):
+            lottie_pbc1 = load_lottiefile(lottie_path)
             st_lottie(
                 lottie_pbc1,
                 loop=True,
                 quality="high",
-                height=280, width=280,
+                height=280,
+                width=280,
             )
-        with col2:
-            st.markdown("<h1 style='text-align: left; color: #000080;'>File Encrypter/Decrypter(DES Algorithm)</h1>", unsafe_allow_html=True)
-        st.markdown("_________")
-        ufilepath = st.file_uploader("Select File", type=["txt", "pdf", "png", "jpg", "jpeg", "gif", "des"])
-        #st.write(filepath)
-        key = st.text_input("Key", type="password")
-        # Ensure key is 8 bytes long
-        key = key[:8].ljust(8, '0').encode('utf-8')
-        delfile = st.checkbox("Delete File after Encrypt/Decrypt", key="deskey0")
+    with col2:
+        st.markdown("<h1 style='text-align: left; color: #000080;'>File Encrypter/Decrypter (DES Algorithm)</h1>", unsafe_allow_html=True)
+
+    st.markdown("_________")
+
+    uploaded_file = st.file_uploader("Select File", type=["txt", "pdf", "png", "jpg", "jpeg", "gif", "des"])
+    key_input = st.text_input("Key", type="password")
+    key = key_input[:8].ljust(8, '0').encode('utf-8')  # Ensure key is 8 bytes
+
+    delfile = st.checkbox("Delete File after Encrypt/Decrypt", key="deskey0")
+
+    if uploaded_file is not None:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp.write(uploaded_file.getvalue())
+            tmp_path = tmp.name
 
         if st.button("Encrypt File"):
-            filepath = os.path.join(UPLOADS_DIR, ufilepath.name)
-            st.write(f"Selected File: {filepath}")  # Debugging statement
-            encrypt(filepath, key, delfile)
+            encrypt(tmp_path, key, delfile)
 
         if st.button("Decrypt File"):
-            filepath = os.path.join(ENCRYPTED_DIR, ufilepath.name)
-            st.write(f"Selected File: {filepath}")  # Debugging statement
-            decrypt(filepath, key, delfile)
+            decrypt(tmp_path, key, delfile)
 
-    if __name__ == "__main__":
-        main()
+# Run only if on DES page
+if selected == 'DES Encryption/Decryption':
+    main()

@@ -1,4 +1,5 @@
 import os
+import tempfile
 import streamlit as st
 from streamlit_lottie import st_lottie
 from file_checker import checkFile
@@ -53,7 +54,7 @@ if selected == 'Malware Detection In Files':
                     "of decision trees at training time and outputs the class that is the mode of the classes (classification) "
                     "or the mean prediction (regression) of the individual trees.")
     with col2:
-        lottie_pbc1 = load_lottiefile("F:/Projects/Malware Detection using ML/Malware-Detection/lottiefiles/malware prevention.json")
+        lottie_pbc1 = load_lottiefile("lottiefiles/malware prevention.json")
         st_lottie(
             lottie_pbc1,
             loop=True,
@@ -93,10 +94,10 @@ if selected == 'Malware Detection In Files':
             st.write("### Malware Detection Results:")
             for file in files:
                 try:
-                    # Write the file to a temporary location
-                    temp_file_path = 'F:/Projects/Malware Detection using ML/Malware Files/TemporaryFiles/tempFile'
-                    with open(temp_file_path, 'wb') as temp_file:
+                    # Create a temporary file
+                    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
                         temp_file.write(file.getvalue())
+                        temp_file_path = temp_file.name
 
                     # Check for malware
                     legitimate = checkFile(temp_file_path)
@@ -105,7 +106,7 @@ if selected == 'Malware Detection In Files':
                         st.success(f"File {file.name} seems *LEGITIMATE*!")
                         col1,col2 = st.columns((6,10))
                         with col2:
-                            lottie_pbc1 = load_lottiefile("F:/Projects/Malware Detection using ML/Malware-Detection/lottiefiles/virus scanning.json")
+                            lottie_pbc1 = load_lottiefile("lottiefiles/virus scanning.json")
                             st_lottie(
                                 lottie_pbc1,
                                 loop=True,
@@ -116,7 +117,7 @@ if selected == 'Malware Detection In Files':
                         st.error(f"File {file.name} is probably a **MALWARE**!!!")
                         col1,col2 = st.columns((6,10))
                         with col2:
-                            lottie_pbc1 = load_lottiefile("F:/Projects/Malware Detection using ML/Malware-Detection/lottiefiles/malwaredetected.json")
+                            lottie_pbc1 = load_lottiefile("lottiefiles/malwaredetected.json")
                             st_lottie(
                                 lottie_pbc1,
                                 loop=True,

@@ -156,11 +156,28 @@ def load_lottiefile(filepath: str):
     with open(filepath, "r") as f:
         return json.load(f)
 
+def encrypt(filepath, password, delfile):
+    if not filepath:
+        st.error("File Name cannot be empty!!")
+    else:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".aes") as encrypted_file:
+            encrypted_path = encrypted_file.name
+        try:
+            pyAesCrypt.encryptFile(filepath, encrypted_path, password, BUFFER_SIZE)
+            if delfile:
+                os.remove(filepath)
+            st.success("File Encrypted Successfully!!")
+            st.download_button("Download Encrypted File", open(encrypted_path, "rb").read(), file_name=os.path.basename(encrypted_path))
+        except Exception:
+            st.error("An error occurred!!")
+
 def decrypt(filepath, password, delfile):
     if not filepath:
         st.error("File Name cannot be empty!!")
     else:
-        decrypted_path = filepath.replace(".aes", "")
+        # Ensure decrypted file doesn't overwrite input
+        with tempfile.NamedTemporaryFile(delete=False) as decrypted_file:
+            decrypted_path = decrypted_file.name
         try:
             pyAesCrypt.decryptFile(filepath, decrypted_path, password, BUFFER_SIZE)
             if delfile:
@@ -169,20 +186,6 @@ def decrypt(filepath, password, delfile):
             st.download_button("Download Decrypted File", open(decrypted_path, "rb").read(), file_name=os.path.basename(decrypted_path))
         except ValueError as e:
             st.error(str(e))
-        except Exception:
-            st.error("An error occurred!!")
-
-def encrypt(filepath, password, delfile):
-    if not filepath:
-        st.error("File Name cannot be empty!!")
-    else:
-        encrypted_path = filepath + ".aes"
-        try:
-            pyAesCrypt.encryptFile(filepath, encrypted_path, password, BUFFER_SIZE)
-            if delfile:
-                os.remove(filepath)
-            st.success("File Encrypted Successfully!!")
-            st.download_button("Download Encrypted File", open(encrypted_path, "rb").read(), file_name=os.path.basename(encrypted_path))
         except Exception:
             st.error("An error occurred!!")
 

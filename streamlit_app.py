@@ -171,27 +171,28 @@ def encrypt(filepath, password, delfile):
         except Exception:
             st.error("An error occurred!!")
 
-def decrypt(filepath, password, delfile, original_filename):
+def decrypt(filepath, password, delfile):
     if not filepath:
         st.error("File Name cannot be empty!!")
     else:
-        # Get original name by stripping .aes from uploaded file
-        if original_filename.endswith(".aes"):
-            output_filename = original_filename[:-4]  # remove '.aes'
-        else:
-            output_filename = "decrypted_file"
-
-        with tempfile.NamedTemporaryFile(delete=False) as decrypted_file:
+        # Get the original filename without .aes extension
+        original_name = os.path.basename(filepath).replace(".aes", "")
+        
+        # Create a temp file with the original name as suffix (e.g., .pdf)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(original_name)[1]) as decrypted_file:
             decrypted_path = decrypted_file.name
+
         try:
             pyAesCrypt.decryptFile(filepath, decrypted_path, password, BUFFER_SIZE)
             if delfile:
                 os.remove(filepath)
             st.success("File Decrypted Successfully!!")
+
+            # Offer download with correct original filename
             st.download_button(
-                "Download Decrypted File",
-                open(decrypted_path, "rb").read(),
-                file_name=output_filename  # Use proper file name with extension
+                label="Download Decrypted File",
+                data=open(decrypted_path, "rb").read(),
+                file_name=original_name
             )
         except ValueError as e:
             st.error(str(e))

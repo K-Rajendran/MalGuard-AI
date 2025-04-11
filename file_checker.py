@@ -178,8 +178,8 @@ def extract_info(fpath):
 
 
 def checkFile(file):
-    model = joblib.load("F:\Projects\Malware Detection using ML\Malware-Detection\model\model.pkl")
-    features = pickle.loads(open(os.path.join('F:/Projects/Malware Detection using ML/Malware-Detection/model/features.pkl'), 'rb').read())
+    model = joblib.load("model/model.pkl")
+    features = pickle.loads(open(os.path.join('model/features.pkl'), 'rb').read())
     data = extract_info(file)
     if data != {}:
         pe_features = list(map(lambda x: data[x], features))

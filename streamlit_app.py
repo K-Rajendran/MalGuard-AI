@@ -252,41 +252,68 @@ def load_lottiefile(filepath: str):
     with open(filepath, "r") as f:
         return json.load(f)
 
-def encrypt(filepath, key, delfile):
+def encrypt(uploaded_file, key, delfile):
     try:
-        with open(filepath, 'rb') as f:
+        # Save uploaded file temporarily
+        temp_dir = tempfile.mkdtemp()
+        original_filename = uploaded_file.name
+        input_path = os.path.join(temp_dir, original_filename)
+
+        with open(input_path, 'wb') as f:
+            f.write(uploaded_file.getvalue())
+
+        # Encrypt content
+        with open(input_path, 'rb') as f:
             plaintext = f.read()
             cipher = DES.new(key, DES.MODE_ECB)
             ciphertext = cipher.encrypt(pad(plaintext, DES.block_size))
 
-        encrypted_filepath = filepath + ".des"
-        with open(encrypted_filepath, 'wb') as f:
+        encrypted_path = input_path + ".des"
+        with open(encrypted_path, 'wb') as f:
             f.write(ciphertext)
 
         if delfile:
-            os.remove(filepath)
+            os.remove(input_path)
 
         st.success("File Encrypted Successfully!")
-        st.download_button("Download Encrypted File", open(encrypted_filepath, "rb").read(), file_name=os.path.basename(encrypted_filepath))
+        with open(encrypted_path, "rb") as ef:
+            st.download_button("Download Encrypted File", ef.read(), file_name=os.path.basename(encrypted_path))
+
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
 
-def decrypt(filepath, key, delfile):
+def decrypt(uploaded_file, key, delfile):
     try:
-        with open(filepath, 'rb') as f:
+        if not uploaded_file.name.endswith(".des"):
+            st.error("Uploaded file is not a .des encrypted file.")
+            return
+
+        temp_dir = tempfile.mkdtemp()
+        encrypted_filename = uploaded_file.name
+        encrypted_path = os.path.join(temp_dir, encrypted_filename)
+
+        with open(encrypted_path, 'wb') as f:
+            f.write(uploaded_file.getvalue())
+
+        # Recover original file name
+        original_filename = encrypted_filename[:-4]
+        decrypted_path = os.path.join(temp_dir, original_filename)
+
+        with open(encrypted_path, 'rb') as f:
             ciphertext = f.read()
             cipher = DES.new(key, DES.MODE_ECB)
             plaintext = unpad(cipher.decrypt(ciphertext), DES.block_size)
 
-        decrypted_filepath = filepath.replace(".des", "")
-        with open(decrypted_filepath, 'wb') as f:
+        with open(decrypted_path, 'wb') as f:
             f.write(plaintext)
 
         if delfile:
-            os.remove(filepath)
+            os.remove(encrypted_path)
 
         st.success("File Decrypted Successfully!")
-        st.download_button("Download Decrypted File", open(decrypted_filepath, "rb").read(), file_name=os.path.basename(decrypted_filepath))
+        with open(decrypted_path, "rb") as df:
+            st.download_button("Download Decrypted File", df.read(), file_name=original_filename)
+
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
 
@@ -315,15 +342,11 @@ def main():
     delfile = st.checkbox("Delete File after Encrypt/Decrypt", key="deskey0")
 
     if uploaded_file is not None:
-        with tempfile.NamedTemporaryFile(delete=False) as tmp:
-            tmp.write(uploaded_file.getvalue())
-            tmp_path = tmp.name
-
         if st.button("Encrypt File"):
-            encrypt(tmp_path, key, delfile)
+            encrypt(uploaded_file, key, delfile)
 
         if st.button("Decrypt File"):
-            decrypt(tmp_path, key, delfile)
+            decrypt(uploaded_file, key, delfile)
 
 # Run only if on DES page
 if selected == 'DES Encryption/Decryption':

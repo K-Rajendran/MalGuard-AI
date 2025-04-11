@@ -175,29 +175,37 @@ def decrypt(filepath, password, delfile):
     if not filepath:
         st.error("File Name cannot be empty!!")
     else:
-        # Get the original filename without .aes extension
-        original_name = os.path.basename(filepath).replace(".aes", "")
-        
-        # Create a temp file with the original name as suffix (e.g., .pdf)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(original_name)[1]) as decrypted_file:
-            decrypted_path = decrypted_file.name
+        if os.path.exists(filepath):
+            # Extract the original file name by removing .aes extension
+            encrypted_filename = os.path.basename(filepath)
+            if encrypted_filename.endswith(".aes"):
+                original_filename = encrypted_filename[:-4]  # Remove '.aes'
 
-        try:
-            pyAesCrypt.decryptFile(filepath, decrypted_path, password, BUFFER_SIZE)
-            if delfile:
-                os.remove(filepath)
-            st.success("File Decrypted Successfully!!")
+                # Create temp file with original file's name and extension
+                temp_dir = tempfile.mkdtemp()
+                decrypted_path = os.path.join(temp_dir, original_filename)
 
-            # Offer download with correct original filename
-            st.download_button(
-                label="Download Decrypted File",
-                data=open(decrypted_path, "rb").read(),
-                file_name=original_name
-            )
-        except ValueError as e:
-            st.error(str(e))
-        except Exception:
-            st.error("An error occurred!!")
+                try:
+                    pyAesCrypt.decryptFile(filepath, decrypted_path, password, BUFFER_SIZE)
+                    if delfile:
+                        os.remove(filepath)
+                    st.success("File Decrypted Successfully!!")
+
+                    # Download with correct original name and extension
+                    with open(decrypted_path, "rb") as f:
+                        st.download_button(
+                            label="Download Decrypted File",
+                            data=f.read(),
+                            file_name=original_filename
+                        )
+                except ValueError as e:
+                    st.error(str(e))
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")
+            else:
+                st.error("Uploaded file does not have a .aes extension.")
+        else:
+            st.error("File does not exist!!")
 
 def main():
     col1, col2 = st.columns((4, 10))

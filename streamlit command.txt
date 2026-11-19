@@ -1,1 +1,0 @@
-streamlit run "F:\Projects\Malware Detection using ML\Malware-Detection\streamlit_app.py"

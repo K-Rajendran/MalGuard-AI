@@ -15,7 +15,11 @@ Try: python3 main.py malwares/Ransomware/Locky.exe
 """)
         exit(1)
     filename = sys.argv[1]
-    legitimate = checkFile(filename)
+    try:
+        legitimate = checkFile(filename)
+    except (ValueError, OSError) as exc:
+        print(f'Analysis could not complete: {exc}', file=sys.stderr)
+        return 2
     if legitimate:
         print(f"File {sys.argv[1]} seems legitimate file!")
     else:
@@ -23,4 +27,4 @@ Try: python3 main.py malwares/Ransomware/Locky.exe
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -1,5 +1,24 @@
+[global]
+developmentMode=false
+
 [theme]
 base="light"
-primaryColor="#28b3b5"
-secondaryBackgroundColor="#d4c048"
-textColor="#08055c"
+primaryColor="#09318D"
+backgroundColor="#FFFFFF"
+secondaryBackgroundColor="#F3F5FC"
+textColor="#132547"
+font="sans serif"
+chartCategoricalColors=["#09318D", "#FD91CC", "#597CC8", "#AD397E", "#68748B"]
+
+[server]
+address="127.0.0.1"
+port=8501
+maxUploadSize=20
+enableXsrfProtection=true
+enableCORS=true
+
+[browser]
+gatherUsageStats=false
+
+[logger]
+level="info"
